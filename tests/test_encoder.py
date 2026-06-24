@@ -10,7 +10,7 @@ def test_encode_mp3_calls_ffmpeg_with_v0(tmp_path):
     mp3 = tmp_path / "output.mp3"
 
     with patch('dlt.encoder.get_ffmpeg_exe', return_value='/fake/ffmpeg'), \
-         patch('subprocess.run') as mock_run:
+         patch('dlt.encoder.subprocess.run') as mock_run:
         mock_run.return_value = MagicMock(returncode=0, stderr='')
         result = encode_mp3(wav, mp3)
 
@@ -28,7 +28,7 @@ def test_encode_mp3_raises_on_ffmpeg_failure(tmp_path):
     mp3 = tmp_path / "output.mp3"
 
     with patch('dlt.encoder.get_ffmpeg_exe', return_value='/fake/ffmpeg'), \
-         patch('subprocess.run') as mock_run:
+         patch('dlt.encoder.subprocess.run') as mock_run:
         mock_run.return_value = MagicMock(returncode=1, stderr='codec not found')
 
         with pytest.raises(RuntimeError, match='codec not found'):
