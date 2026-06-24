@@ -1,5 +1,12 @@
 import re
 import argparse
+import shutil
+import tempfile
+from pathlib import Path
+
+import dlt.downloader
+import dlt.encoder
+from dlt.pitcher import pitch_shift
 
 
 def slugify(title: str, semitones: int) -> str:
@@ -21,4 +28,32 @@ def semitones_type(value: str) -> int:
 
 
 def main() -> None:
-    pass
+    parser = argparse.ArgumentParser(
+        description="Transpose audio from a music video URL by N semitones."
+    )
+    parser.add_argument("url", help="Music video URL (any site supported by yt-dlp)")
+    parser.add_argument("semitones", type=semitones_type, help="Semitones to transpose (-12 to +12)")
+    parser.add_argument("-o", "--output", help="Output MP3 filename (default: auto-generated from video title)")
+    args = parser.parse_args()
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp = Path(tmpdir)
+
+        try:
+            wav_path, title = dlt.downloader.download(args.url, tmp)
+        except Exception as e:
+            raise SystemExit(f"dlt: download failed: {e}") from e
+
+        output_name = args.output or slugify(title, args.semitones)
+        shifted_path = tmp / "shifted.wav"
+        mp3_tmp = tmp / output_name
+
+        pitch_shift(wav_path, args.semitones, shifted_path)
+
+        try:
+            dlt.encoder.encode_mp3(shifted_path, mp3_tmp)
+        except Exception as e:
+            raise SystemExit(f"dlt: encoding failed: {e}") from e
+
+        shutil.move(str(mp3_tmp), output_name)
+        print(f"Saved: {output_name}")
