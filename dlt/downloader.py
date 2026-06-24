@@ -24,20 +24,22 @@ def download(url: str, output_dir: Path) -> tuple[Path, str]:
 
     title = info.get('title', 'unknown')
 
-    raw_files = list(output_dir.glob('original_raw.*'))
+    raw_files = sorted(output_dir.glob('original_raw.*'))
     if not raw_files:
         raise RuntimeError("yt-dlp download produced no output file")
     raw_path = raw_files[0]
 
     wav_path = output_dir / 'original.wav'
     ffmpeg = get_ffmpeg_exe()
-    result = subprocess.run(
-        [ffmpeg, '-i', str(raw_path), '-ar', '44100', '-ac', '2', '-y', str(wav_path)],
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
-        raise RuntimeError(f"audio extraction failed: {result.stderr}")
+    try:
+        result = subprocess.run(
+            [ffmpeg, '-i', str(raw_path), '-ar', '44100', '-ac', '2', '-y', str(wav_path)],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"audio extraction failed: {result.stderr}")
+    finally:
+        raw_path.unlink(missing_ok=True)
 
-    raw_path.unlink(missing_ok=True)
     return wav_path, title

@@ -29,7 +29,7 @@ def _fake_ffmpeg_writes_wav(tmp_path):
 
 
 def test_download_returns_title_and_wav_path(tmp_path):
-    with patch('yt_dlp.YoutubeDL', return_value=_make_mock_ydl(tmp_path)), \
+    with patch('dlt.downloader.yt_dlp.YoutubeDL', return_value=_make_mock_ydl(tmp_path)), \
          patch('dlt.downloader.get_ffmpeg_exe', return_value='/fake/ffmpeg'), \
          patch('dlt.downloader.subprocess.run', side_effect=_fake_ffmpeg_writes_wav(tmp_path)):
 
@@ -46,6 +46,6 @@ def test_download_raises_on_yt_dlp_error(tmp_path):
     mock_ydl.__exit__ = MagicMock(return_value=False)
     mock_ydl.extract_info.side_effect = yt_dlp.utils.DownloadError('video unavailable')
 
-    with patch('yt_dlp.YoutubeDL', return_value=mock_ydl):
+    with patch('dlt.downloader.yt_dlp.YoutubeDL', return_value=mock_ydl):
         with pytest.raises(RuntimeError, match='video unavailable'):
             download('https://youtu.be/invalid', tmp_path)
