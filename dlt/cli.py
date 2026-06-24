@@ -46,7 +46,7 @@ def main() -> None:
 
         output_name = args.output or slugify(title, args.semitones)
         shifted_path = tmp / "shifted.wav"
-        mp3_tmp = tmp / output_name
+        mp3_tmp = tmp / Path(output_name).name
 
         pitch_shift(wav_path, args.semitones, shifted_path)
 
@@ -55,5 +55,5 @@ def main() -> None:
         except Exception as e:
             raise SystemExit(f"dlt: encoding failed: {e}") from e
 
-        shutil.move(str(mp3_tmp), output_name)
+        shutil.move(mp3_tmp, output_name)
         print(f"Saved: {output_name}")
