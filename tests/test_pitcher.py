@@ -10,10 +10,11 @@ def _write_sine_wav(path: Path, freq: float, sample_rate: int = 44100, duration:
     sf.write(str(path), audio, sample_rate)
 
 
-def _dominant_freq(path: Path) -> float:
-    audio, sr = sf.read(str(path))
-    fft = np.fft.rfft(audio)
-    freqs = np.fft.rfftfreq(len(audio), 1 / sr)
+def _dominant_freq(path: Path, channel: int = 0) -> float:
+    audio, sr = sf.read(str(path), dtype='float32')
+    channel_audio = audio[:, channel] if audio.ndim == 2 else audio
+    fft = np.fft.rfft(channel_audio)
+    freqs = np.fft.rfftfreq(len(channel_audio), 1 / sr)
     return float(freqs[np.argmax(np.abs(fft))])
 
 
@@ -60,3 +61,5 @@ def test_pitch_shift_handles_stereo(tmp_path):
     audio, _ = sf.read(str(out))
     assert audio.ndim == 2
     assert audio.shape[1] == 2
+    dominant = _dominant_freq(out, channel=0)
+    assert 480 < dominant < 510, f"Expected ~494 Hz on stereo ch0 after +2 semitones, got {dominant:.1f} Hz"
